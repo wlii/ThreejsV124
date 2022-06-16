@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - glTF loader</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+	</head>
+
+	<body>
+		<div id="info">
+			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - GLTFLoader<br />
+			Battle Damaged Sci-fi Helmet by
+			<a href="https://sketchfab.com/theblueturtle_" target="_blank" rel="noopener">theblueturtle_</a><br />
+			<a href="https://hdrihaven.com/hdri/?h=royal_esplanade" target="_blank" rel="noopener">Royal Esplanade</a> by <a
+			 href="https://hdrihaven.com/" target="_blank" rel="noopener">HDRI Haven</a>
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '../build/three.module.js';
+
+			import { OrbitControls } from './jsm/controls/OrbitControls.js';
+			import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
+			import { RGBELoader } from './jsm/loaders/RGBELoader.js';
+			import { RoughnessMipmapper } from './jsm/utils/RoughnessMipmapper.js';
+
+			let camera, scene, renderer,raycaster,mouse,sprite;
+			var  textureZ;
+			let INTERSECTED;
+			init();
+			render();
+			
+			
+			function initContent() {
+				/**
+				 * 创建一个设置重复纹理的管道
+				 */
+				var curveZ = new THREE.CatmullRomCurve3([
+					new THREE.Vector3( -10, 0, 10 ),
+					new THREE.Vector3( -5, 5, 5 ),
+					new THREE.Vector3( 0, 0, 0 ),
+					new THREE.Vector3( 5, -5, 5 ),
+					new THREE.Vector3( 10, 0, 10 )
+				]);
+				var tubeGeometry = new THREE.TubeGeometry(curveZ, 100, 0.6, 2, false);
+				var textureLoader = new THREE.TextureLoader();
+				textureZ = textureLoader.load('img/5b.jpg');
+				textureZ.wrapS = THREE.RepeatWrapping
+				textureZ.wrapT=THREE.RepeatWrapping
+				textureZ.repeat.x = 5;
+				var tubeMaterial = new THREE.MeshBasicMaterial({
+				  map: textureZ,
+				  transparent: true,
+				});
+				scene.add(new THREE.Mesh(tubeGeometry, tubeMaterial))
+			}
+			
+			function init() {
+
+				const container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+
+				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.25, 20 );
+				camera.position.set( - 1.8, 0.6, 2.7 );
+
+				scene = new THREE.Scene();
+				mouse = new THREE.Vector2();
+				
+				//辅助坐标
+				var axesHelper=new THREE.AxesHelper(100);
+				scene.add(axesHelper);
+						
+				//添加精灵		
+				var group = new THREE.Group();
+				const sprite1 = new THREE.Sprite( new THREE.SpriteMaterial( { color: '#69f' } ) );
+					sprite1.position.set( 0.5, 0.5, 0.5 );
+					sprite1.scale.set( 0.5, 0.5, 0.5 );
+					group.add( sprite1 );
+					scene.add( group );
+
+
+
+initContent()
+
+
+//管道
+// const curveCatmull = new THREE.CatmullRomCurve3( [
+// 	new THREE.Vector3( -10, 0, 10 ),
+// 	new THREE.Vector3( -5, 5, 5 ),
+// 	new THREE.Vector3( 0, 0, 0 ),
+// 	new THREE.Vector3( 5, -5, 5 ),
+// 	new THREE.Vector3( 10, 0, 10 )
+// ] );
+//  textureLo = new THREE.TextureLoader().load( '5b.jpg' );
+// // const materialcurve = new THREE.MeshBasicMaterial( { map: texture } );
+// const geometrycurve = new THREE.TubeGeometry(curveCatmull, 10, 0.0, 5, false);
+// var materialcurve = new THREE.MeshPhongMaterial({
+//   map: textureLo,
+//   transparent: true,
+// });
+// // const geometrycurve = new THREE.BufferGeometry().setFromPoints( pointscurve );
+// // const materialcurve = new THREE.LineBasicMaterial( { color : 0xff0000 } );
+// const curveObjectcurve = new THREE.Line( geometrycurve, materialcurve );
+// scene.add(curveObjectcurve)
+
+// var curveCatm = new THREE.CatmullRomCurve3([
+//   new THREE.Vector3(2, 2, 2),
+//   new THREE.Vector3(5, 5, 5),
+//   new THREE.Vector3(6, 9, 9),
+// ],true/*是否闭合*/);
+// var tubeGeometry = new THREE.TubeGeometry(curveCatm, 2, 0.4, 2, false);
+// var textureLoader = new THREE.TextureLoader();
+// var texture = textureLoader.load('5a.jpg');
+// // 设置阵列模式为 RepeatWrapping
+// texture.wrapS = THREE.RepeatWrapping
+// texture.wrapT=THREE.RepeatWrapping
+// // 设置x方向的偏移(沿着管道路径方向)，y方向默认1
+// //等价texture.repeat= new THREE.Vector2(20,1)
+// texture.repeat.x = 20;
+// var tubeMaterial = new THREE.MeshPhongMaterial({
+//   map: texture,
+//   transparent: true,
+// });
+// var tube = new THREE.Mesh(tubeGeometry, tubeMaterial);
+// scene.add(tube)
+
+
+let curve = new THREE.QuadraticBezierCurve3(
+	new THREE.Vector3( 0.25, 0.5, 0.5 ),
+	new THREE.Vector3( 0, 0.5, 0  ),
+	new THREE.Vector3( 0, 0, 0 )
+);
+let points = curve.getPoints( 50 );
+let geometry = new THREE.BufferGeometry().setFromPoints( points );
+let materialBezier = new THREE.LineBasicMaterial( { color : 0xff0000 } );
+// Create the final object to add to the scene
+let curveObject = new THREE.Line( geometry, materialBezier );
+scene.add( curveObject );
+
+//添加文字
+var getTexture = function () {
+var canvas = document.createElement('canvas');
+canvas.width =150;
+canvas.height =150;
+var ctx = canvas.getContext('2d');
+ctx.fillStyle = "rgb(58,255,250)"
+ctx.font="10px Arial";
+ctx.fillText("ArialArial",50,20);
+
+var texture = new THREE.Texture(canvas);
+texture.needsUpdate = true;
+return texture;
+};
+
+const material = new THREE.SpriteMaterial( { map: getTexture(), color: 0xffffff } );
+
+const sprite = new THREE.Sprite( material );
+sprite.scale.set(4, 4, 4)
+scene.add( sprite );
+				
+				//添加gltf	
+				new RGBELoader()
+					.setDataType( THREE.UnsignedByteType )
+					.setPath( 'textures/equirectangular/' )
+					.load( 'royal_esplanade_1k.hdr', function ( texture ) {
+
+						const envMap = pmremGenerator.fromEquirectangular( texture ).texture;
+						scene.background = envMap;
+						scene.environment = envMap;
+
+						texture.dispose();
+						pmremGenerator.dispose();
+
+						render();
+
+						// model
+
+						// use of RoughnessMipmapper is optional
+						const roughnessMipmapper = new RoughnessMipmapper( renderer );
+
+						// const loader = new GLTFLoader().setPath( 'models/gltf/DamagedHelmet/glTF/' );
+						// loader.load( 'DamagedHelmet.gltf', function ( gltf ) {
+						const loader = new GLTFLoader().setPath( 'models/gltf/' );
+						loader.load( 'wei-cube.glb', function ( gltf ) {
+							gltf.scene.traverse( function ( child ) {
+								if ( child.isMesh ) {
+								scene.children.push(child)
+									// TOFIX RoughnessMipmapper seems to be broken with WebGL 2.0
+									// roughnessMipmapper.generateMipmaps( child.material );
+								}
+							} );
+							//scene.add( gltf.scene );
+							roughnessMipmapper.dispose();
+							render();
+						} );
+					} );
+
+				raycaster = new THREE.Raycaster();
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.toneMapping = THREE.ACESFilmicToneMapping;
+				renderer.toneMappingExposure = 1;
+				renderer.outputEncoding = THREE.sRGBEncoding;
+				container.appendChild( renderer.domElement );
+
+				const pmremGenerator = new THREE.PMREMGenerator( renderer );
+				pmremGenerator.compileEquirectangularShader();
+
+				const controls = new OrbitControls( camera, renderer.domElement );
+				controls.addEventListener( 'change', render ); // use if there is no animation loop
+				controls.minDistance = 2;
+				controls.maxDistance = 10;
+				controls.target.set( 0, 0, - 0.2 );
+				controls.update();
+				document.addEventListener( 'click', onMouseMove, false );
+				window.addEventListener( 'resize', onWindowResize, false );
+			}
+
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				render();
+			}
+			//
+			function onMouseMove( event ) {
+				event.preventDefault();
+				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+				
+				raycaster.setFromCamera( mouse, camera );
+				const intersects = raycaster.intersectObjects( scene.children );
+				if ( intersects.length > 0 ) {
+					if ( INTERSECTED != intersects[ 0 ].object ) {
+						if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+						INTERSECTED = intersects[ 0 ].object;
+						INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+						INTERSECTED.material.emissive.setHex( 0xff0000 );
+					}
+				}
+			}
+
+  function animate() {
+        requestAnimationFrame(animate);
+renderer.render(scene, camera);
+        textureZ.offset.x += 0.5
+    }
+	
+			function render() {
+				        
+				animate() 
+			}
+		</script>
+	</body>
+</html>
